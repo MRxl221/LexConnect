@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LexConnect — Seu Advogado em Minutos</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dim: #7a6030;
+    --text: #f0ede8;
+    --text-muted: #8a8580;
+    --accent: #2a6b9c;
+    --accent-light: #4a8bbf;
+    --danger: #c0392b;
+    --success: #27ae60;
+    --border: rgba(201,168,76,0.15);
+    --radius: 12px;
+    --shadow: 0 8px 40px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── BACKGROUND ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 0%, rgba(201,168,76,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 100%, rgba(42,107,156,0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── LAYOUT ─── */
+  .app { position: relative; z-index: 1; }
+
+  /* ─── HERO / NAV ─── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 48px;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,15,0.85);
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--text-muted); font-weight: 400; font-size: 0.9rem; display: block; letter-spacing: 2px; text-transform: uppercase; margin-top: -4px; }
+
+  nav { display: flex; gap: 8px; }
+  .tab-btn {
+    padding: 10px 24px;
+    border-radius: 50px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s;
+    letter-spacing: 0.3px;
+  }
+  .tab-btn:hover { border-color: var(--gold-dim); color: var(--gold-light); }
+  .tab-btn.active {
+    background: linear-gradient(135deg, var(--gold), #a07832);
+    border-color: transparent;
+    color: #0a0a0f;
+    font-weight: 600;
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    text-align: center;
+    padding: 80px 48px 60px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .hero-badge {
+    display: inline-block;
+    padding: 6px 18px;
+    border: 1px solid var(--gold-dim);
+    border-radius: 50px;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 28px;
+    background: rgba(201,168,76,0.05);
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 5vw, 3.8rem);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--gold);
+  }
+  .hero p {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+    max-width: 540px;
+    margin: 0 auto;
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    display: flex; align-items: center; gap: 16px;
+    padding: 0 48px; margin: 0 auto 40px;
+    max-width: 900px;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+  }
+  .divider-icon { color: var(--gold-dim); font-size: 1.2rem; }
+
+  /* ─── PANELS ─── */
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 960px;
+    margin: 0 auto 60px;
+    padding: 0 48px;
+  }
+
+  @media (max-width: 700px) {
+    .panels { grid-template-columns: 1fr; padding: 0 20px; }
+    header { padding: 16px 20px; }
+    nav .tab-btn { padding: 8px 14px; font-size: 0.8rem; }
+    .hero { padding: 50px 20px 40px; }
+    .divider { padding: 0 20px; }
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s, border-color 0.3s;
+  }
+  .panel:hover { transform: translateY(-3px); border-color: rgba(201,168,76,0.3); }
+
+  .panel::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+  }
+
+  .panel.lawyer-panel::before {
+    background: linear-gradient(90deg, var(--accent-light), transparent);
+  }
+
+  .panel-icon {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  .panel-icon.client { background: rgba(201,168,76,0.1); }
+  .panel-icon.lawyer { background: rgba(42,107,156,0.15); }
+
+  .panel h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .panel p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 28px; line-height: 1.6; }
+
+  /* ─── FORM ─── */
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 13px 16px;
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkitappearance: none;
+  }
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+  }
+  .form-group select option { background: #1a1a24; }
+
+  .lawyer-panel .form-group input:focus,
+  .lawyer-panel .form-group select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(42,107,156,0.15);
+  }
+
+  .btn {
+    width: 100%; padding: 14px;
+    border-radius: var(--radius);
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold), #a07832);
+    color: #0a0a0f;
+  }
+  .btn-gold:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+  .btn-blue {
+    background: linear-gradient(135deg, var(--accent), #1a4f75);
+    color: #fff;
+  }
+  .btn-blue:hover { filter: brightness(1.2); transform: translateY(-1px); }
+
+  .btn:active { transform: translateY(0); }
+
+  .btn .spinner {
+    display: none;
+    width: 18px; height: 18px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto;
+  }
+  .btn.loading .btn-text { display: none; }
+  .btn.loading .spinner { display: block; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── TOAST ─── */
+  .toast-container {
+    position: fixed; bottom: 32px; right: 32px;
+    display: flex; flex-direction: column; gap: 10px;
+    z-index: 9999;
+  }
+  .toast {
+    padding: 14px 20px;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    max-width: 320px;
+    display: flex; align-items: center; gap: 10px;
+    animation: slideIn 0.35s ease;
+    box-shadow: var(--shadow);
+  }
+  .toast.success { background: var(--success); color: #fff; }
+  .toast.error   { background: var(--danger);  color: #fff; }
+  .toast.info    { background: var(--accent);   color: #fff; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(40px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ─── REGISTERED LIST VIEW ─── */
+  .list-view {
+    max-width: 960px; margin: 0 auto 80px; padding: 0 48px;
+    display: none;
+  }
+  .list-view.visible { display: block; }
+
+  .list-header {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .list-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: var(--text);
+  }
+  .count-badge {
+    padding: 6px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    font-size: 0.8rem;
+    color: var(--gold);
+  }
+
+  .search-bar {
+    width: 100%; padding: 13px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    margin-bottom: 20px;
+    transition: border-color 0.2s;
+  }
+  .search-bar:focus { border-color: var(--gold-dim); }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.25s;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+  }
+  .card:hover { transform: translateY(-3px); border-color: rgba(201,168,76,0.3); box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
+
+  .card-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1.1rem; color: #fff;
+    margin-bottom: 14px;
+  }
+  .card-name {
+    font-weight: 600; font-size: 1rem; color: var(--text);
+    margin-bottom: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .card-info { font-size: 0.82rem; color: var(--text-muted); }
+  .card-info span { display: block; margin-top: 3px; }
+
+  .card-specialty {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 4px 12px;
+    background: rgba(42,107,156,0.15);
+    border: 1px solid rgba(42,107,156,0.3);
+    border-radius: 50px;
+    font-size: 0.75rem;
+    color: var(--accent-light);
+  }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.4; }
+  .empty-state p { font-size: 0.95rem; }
+
+  /* ─── FOOTER ─── */
+  footer {
+    text-align: center;
+    padding: 32px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+  }
+  footer span { color: var(--gold-dim); }
+
+  /* ─── DB NOTE ─── */
+  .db-note {
+    max-width: 960px;
+    margin: 0 auto 40px;
+    padding: 20px 32px;
+    background: var(--surface2);
+    border: 1px solid rgba(42,107,156,0.3);
+    border-radius: var(--radius);
+    display: flex; align-items: flex-start; gap: 14px;
+    position: relative;
+  }
+  .db-note-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+  .db-note h4 { font-size: 0.9rem; color: var(--accent-light); margin-bottom: 6px; }
+  .db-note p  { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; }
+  .db-note code {
+    background: rgba(255,255,255,0.06);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    color: var(--gold-light);
+  }
+
+  /* ─── SECTION TABS ─── */
+  .section-tabs {
+    display: flex; gap: 8px;
+    max-width: 960px; margin: 0 auto 32px;
+    padding: 0 48px;
+    overflow-x: auto;
+  }
+  .section-tabs::-webkit-scrollbar { display: none; }
+  .stab {
+    padding: 8px 20px;
+    border-radius: 50px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .stab:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .stab.active {
+    background: var(--surface2);
+    color: var(--text);
+    border-color: var(--border);
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      LexConnect
+      <span>⚖ Conectando Justiça</span>
+    </div>
+    <nav>
+      <button class="tab-btn active" onclick="showSection('register')">Cadastro</button>
+      <button class="tab-btn" onclick="showSection('clients')">Clientes</button>
+      <button class="tab-btn" onclick="showSection('lawyers')">Advogados</button>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge">⚖ Plataforma Jurídica Digital</div>
+    <h1>Encontre seu advogado <em>ideal</em> agora</h1>
+    <p>Encontre o advogado ideal perto de você! Conecte-se com profissionais qualificados, veja avaliações e resolva suas dúvidas jurídicas com rapidez e segurança.</p>
+  </section>
+
+  <!-- SECTION: REGISTER -->
+  <div id="section-register">
+
+    <div class="divider">
+      <span class="divider-icon">✦</span>
+    </div>
+
+    <div class="panels">
+      <!-- CLIENT PANEL -->
+      <div class="panel client-panel">
+        <div class="panel-icon client">👤</div>
+        <h2>Sou Cliente</h2>
+        <p>Preciso de assistência jurídica. Cadastre-se e encontre advogados disponíveis na sua cidade.</p>
+
+        <div class="form-group">
+          <label>Nome Completo</label>
+          <input type="text" id="c-nome" placeholder="Ex: Maria Aparecida Silva">
+        </div>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" id="c-email" placeholder="maria@email.com">
+        </div>
+        <div class="form-group">
+          <label>Telefone</label>
+          <input type="tel" id="c-tel" placeholder="(11) 99999-9999" maxlength="15">
+        </div>
+        <div class="form-group">
+          <label>Cidade</label>
+          <input type="text" id="c-cidade" placeholder="São Paulo">
+        </div>
+        <div class="form-group">
+          <label>Assunto Jurídico</label>
+          <select id="c-assunto">
+            <option value="">Selecione a área...</option>
+            <option>Direito Civil</option>
+            <option>Direito Trabalhista</option>
+            <option>Direito de Família</option>
+            <option>Direito Criminal</option>
+            <option>Direito do Consumidor</option>
+            <option>Direito Empresarial</option>
+            <option>Direito Tributário</option>
+            <option>Outro</option>
+          </select>
+        </div>
+
+        <button class="btn btn-gold" id="btn-client" onclick="cadastrarCliente()">
+          <span class="btn-text">Buscar Advogado →</span>
+          <div class="spinner"></div>
+        </button>
+      </div>
+
+      <!-- LAWYER PANEL -->
+      <div class="panel lawyer-panel">
+        <div class="panel-icon lawyer">⚖️</div>
+        <h2>Sou Advogado</h2>
+        <p>Amplie sua cartela de clientes. Cadastre seu perfil e seja encontrado por quem precisa de você.</p>
+
+        <div class="form-group">
+          <label>Nome Completo</label>
+          <input type="text" id="a-nome" placeholder="Ex: Dr. Carlos Eduardo Mendes">
+        </div>
+        <div class="form-group">
+          <label>E-mail Profissional</label>
+          <input type="email" id="a-email" placeholder="dr.carlos@advocacia.com">
+        </div>
+        <div class="form-group">
+          <label>Telefone / WhatsApp</label>
+          <input type="tel" id="a-tel" placeholder="(11) 99999-9999" maxlength="15">
+        </div>
+        <div class="form-group">
+          <label>Cidade de Atuação</label>
+          <input type="text" id="a-cidade" placeholder="São Paulo">
+        </div>
+        <div class="form-group">
+          <label>Especialidade</label>
+          <select id="a-especialidade">
+            <option value="">Selecione a especialidade...</option>
+            <option>Direito Civil</option>
+            <option>Direito Trabalhista</option>
+            <option>Direito de Família</option>
+            <option>Direito Criminal</option>
+            <option>Direito do Consumidor</option>
+            <option>Direito Empresarial</option>
+            <option>Direito Tributário</option>
+            <option>Múltiplas Especialidades</option>
+          </select>
+        </div>
+
+        <button class="btn btn-blue" id="btn-lawyer" onclick="cadastrarAdvogado()">
+          <span class="btn-text">Cadastrar como Advogado →</span>
+          <div class="spinner"></div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: CLIENTS -->
+  <div id="section-clients" style="display:none;">
+    <div class="list-view visible" style="margin-bottom:80px;">
+      <div class="list-header">
+        <h2>Clientes Cadastrados</h2>
+        <span class="count-badge" id="client-count">0</span>
+      </div>
+      <input class="search-bar" placeholder="🔍 Buscar por nome, cidade ou assunto..." oninput="filterList('clients', this.value)">
+      <div class="cards-grid" id="clients-grid"></div>
+    </div>
+  </div>
+
+  <!-- SECTION: LAWYERS -->
+  <div id="section-lawyers" style="display:none;">
+    <div class="list-view visible" style="margin-bottom:80px;">
+      <div class="list-header">
+        <h2>Advogados Cadastrados</h2>
+        <span class="count-badge" id="lawyer-count">0</span>
+      </div>
+      <input class="search-bar" placeholder="🔍 Buscar por nome, cidade ou especialidade..." oninput="filterList('lawyers', this.value)">
+      <div class="cards-grid" id="lawyers-grid"></div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    LexConnect © 2026 — Plataforma Jurídica Digital <span>✦</span>
+    Desenvolvido para conectar <span>justiça</span> e <span>pessoas</span>
+    <br><br>
+  
+</div>
+
+<!-- TOASTS -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+  // ─── STORAGE (substitua por fetch('/api/...') para backend real) ───
+  const DB = {
+    get: (key) => JSON.parse(localStorage.getItem(key) || '[]'),
+    set: (key, data) => localStorage.setItem(key, JSON.stringify(data)),
+    add: (key, item) => {
+      const list = DB.get(key);
+      list.unshift({ ...item, id: Date.now(), criado_em: new Date().toLocaleString('pt-BR') });
+      DB.set(key, list);
+    }
+  };
+
+  // ─── TOAST ───
+  function toast(msg, type = 'success') {
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = (type === 'success' ? '✓ ' : type === 'error' ? '✕ ' : 'ℹ ') + msg;
+    document.getElementById('toasts').appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  // ─── MASK PHONE ───
+  ['c-tel','a-tel'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => {
+      let v = el.value.replace(/\D/g, '');
+      if (v.length > 11) v = v.slice(0, 11);
+      if (v.length > 6) v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+      else if (v.length > 2) v = `(${v.slice(0,2)}) ${v.slice(2)}`;
+      else if (v.length > 0) v = `(${v}`;
+      el.value = v;
+    });
+  });
+
+  // ─── VALIDATION ───
+  function validate(fields) {
+    for (const [label, val] of Object.entries(fields)) {
+      if (!val || val.trim() === '') {
+        toast(`Preencha o campo: ${label}`, 'error');
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function emailExists(key, email) {
+    return DB.get(key).some(i => i.email.toLowerCase() === email.toLowerCase());
+  }
+
+  // ─── LOADING BUTTON ───
+  function setLoading(btnId, on) {
+    document.getElementById(btnId).classList.toggle('loading', on);
+  }
+
+  // ─── CADASTRAR CLIENTE ───
+  function cadastrarCliente() {
+    const nome    = document.getElementById('c-nome').value;
+    const email   = document.getElementById('c-email').value;
+    const tel     = document.getElementById('c-tel').value;
+    const cidade  = document.getElementById('c-cidade').value;
+    const assunto = document.getElementById('c-assunto').value;
+
+    if (!validate({ 'Nome': nome, 'E-mail': email, 'Telefone': tel, 'Cidade': cidade, 'Assunto': assunto })) return;
+
+    if (emailExists('clientes', email)) {
+      toast('Este e-mail já está cadastrado como cliente.', 'error'); return;
+    }
+
+    setLoading('btn-client', true);
+
+    // Simula latência de API (remova o setTimeout em produção)
+    setTimeout(() => {
+      DB.add('clientes', { nome, email, telefone: tel, cidade, assunto });
+      toast(`Bem-vindo(a), ${nome.split(' ')[0]}! Buscando advogados...`);
+      ['c-nome','c-email','c-tel','c-cidade'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('c-assunto').value = '';
+      setLoading('btn-client', false);
+      updateCounts();
+    }, 1200);
+  }
+
+  // ─── CADASTRAR ADVOGADO ───
+  function cadastrarAdvogado() {
+    const nome         = document.getElementById('a-nome').value;
+    const email        = document.getElementById('a-email').value;
+    const tel          = document.getElementById('a-tel').value;
+    const cidade       = document.getElementById('a-cidade').value;
+    const especialidade = document.getElementById('a-especialidade').value;
+
+    if (!validate({ 'Nome': nome, 'E-mail': email, 'Telefone': tel, 'Cidade': cidade, 'Especialidade': especialidade })) return;
+
+    if (emailExists('advogados', email)) {
+      toast('Este e-mail já está cadastrado como advogado.', 'error'); return;
+    }
+
+    setLoading('btn-lawyer', true);
+
+    setTimeout(() => {
+      DB.add('advogados', { nome, email, telefone: tel, cidade, especialidade });
+      toast(`Dr(a). ${nome.split(' ')[0]}, perfil criado com sucesso!`);
+      ['a-nome','a-email','a-tel','a-cidade'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('a-especialidade').value = '';
+      setLoading('btn-lawyer', false);
+      updateCounts();
+    }, 1200);
+  }
+
+  // ─── SECTION SWITCH ───
+  function showSection(name) {
+    ['register','clients','lawyers'].forEach(s => {
+      document.getElementById(`section-${s}`).style.display = s === name ? 'block' : 'none';
+    });
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', ['register','clients','lawyers'][i] === name);
+    });
+    if (name === 'clients') renderList('clients');
+    if (name === 'lawyers') renderList('lawyers');
+  }
+
+  // ─── RENDER LIST ───
+  function renderList(type, query = '') {
+    const key   = type === 'clients' ? 'clientes' : 'advogados';
+    const grid  = document.getElementById(`${type}-grid`);
+    let items   = DB.get(key);
+
+    if (query) {
+      const q = query.toLowerCase();
+      items = items.filter(i =>
+        i.nome.toLowerCase().includes(q) ||
+        i.cidade.toLowerCase().includes(q) ||
+        (i.assunto || i.especialidade || '').toLowerCase().includes(q)
+      );
+    }
+
+    grid.innerHTML = '';
+
+    if (items.length === 0) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+        <div class="icon">${type === 'clients' ? '👤' : '⚖️'}</div>
+        <p>${query ? 'Nenhum resultado encontrado.' : 'Nenhum ' + (type === 'clients' ? 'cliente' : 'advogado') + ' cadastrado ainda.'}</p>
+      </div>`;
+      return;
+    }
+
+    items.forEach(item => {
+      const initials = item.nome.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+      const tag = item.assunto || item.especialidade || '';
+      grid.innerHTML += `
+        <div class="card">
+          <div class="card-avatar">${initials}</div>
+          <div class="card-name">${item.nome}</div>
+          <div class="card-info">
+            <span>📍 ${item.cidade}</span>
+            <span>📱 ${item.telefone}</span>
+            <span>✉️ ${item.email}</span>
+            <span style="opacity:0.5;font-size:0.75rem">🕐 ${item.criado_em}</span>
+          </div>
+          ${tag ? `<div class="card-specialty">${tag}</div>` : ''}
+        </div>`;
+    });
+  }
+
+  function filterList(type, q) { renderList(type, q); }
+
+  function updateCounts() {
+    document.getElementById('client-count').textContent = DB.get('clientes').length + ' cadastrados';
+    document.getElementById('lawyer-count').textContent = DB.get('advogados').length + ' cadastrados';
+  }
+
+  // Init
+  updateCounts();
+</script>
+</body>
+</html>
