@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Advogados próximos — Lex Connect</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="nav"></header>
+
+<main class="finder">
+  <aside class="panel">
+    <div class="panel-head">
+      <h1>Advogados próximos</h1>
+      <div class="where" id="where">Detectando sua localização…</div>
+      <div class="searchrow">
+        <input class="input" id="addr" placeholder="Digite um endereço, bairro ou CEP">
+        <button class="btn btn-gold btn-sm" id="btn-addr">Buscar</button>
+      </div>
+      <div class="filters">
+        <select class="input" id="radius" aria-label="Raio de busca">
+          <option value="2">Até 2 km</option>
+          <option value="5" selected>Até 5 km</option>
+          <option value="10">Até 10 km</option>
+          <option value="25">Até 25 km</option>
+          <option value="50">Até 50 km</option>
+        </select>
+        <input class="input" id="filtro" placeholder="Filtrar por nome" aria-label="Filtrar por nome">
+        <button class="btn btn-ghost btn-sm" id="btn-gps" title="Usar minha localização">📍</button>
+      </div>
+    </div>
+    <div class="list" id="list"></div>
+  </aside>
+  <div id="map" aria-label="Mapa de advogados"></div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="js/app.js"></script>
+<script>
+  if (LC.requireAuth()) init();
+
+  function init() {
+    LC.renderNav('advogados');
+
+    const $ = id => document.getElementById(id);
+    const map = L.map('map', { zoomControl: true }).setView([-14.235, -51.925], 4); // Brasil
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    let origin = null, results = [], markers = {}, meMarker = null, radiusCircle = null, selected = null;
+
+    const pinIcon = () => L.divIcon({ className: '', html: '<div class="pin" style="width:30px;height:30px"><span>⚖</span></div>', iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -28] });
+
+    function setLoading(text) {
+      $('list').innerHTML = `<div class="state"><div class="spinner"></div>${LC.esc(text)}</div>`;
+    }
+
+    async function setOrigin(lat, lon, label) {
+      origin = { lat, lon };
+      if (meMarker) meMarker.remove();
+      meMarker = L.circleMarker([lat, lon], { radius: 9, color: '#fff', weight: 3, fillColor: '#3b82f6', fillOpacity: 1 }).addTo(map).bindTooltip('Você está aqui');
+      $('where').textContent = label ? '📍 ' + label : '📍 Localização definida';
+      if (!label) LC.reverseGeocode(lat, lon).then(n => { if (n) $('where').textContent = '📍 ' + n; });
+      await load();
+    }
+
+    async function load() {
+      if (!origin) return;
+      const radius = +$('radius').value;
+      setLoading('Buscando advogados num raio de ' + radius + ' km…');
+      if (radiusCircle) radiusCircle.remove();
+      radiusCircle = L.circle([origin.lat, origin.lon], { radius: radius * 1000, color: '#d4a84b', weight: 1.5, fillOpacity: .05 }).addTo(map);
+      map.fitBounds(radiusCircle.getBounds(), { padding: [20, 20] });
+      try {
+        results = await LC.searchLawyers(origin.lat, origin.lon, radius);
+        sessionStorage.setItem('lc_results', JSON.stringify(results));
+        render();
+      } catch (err) {
+        $('list').innerHTML = `<div class="state">Não foi possível consultar a API agora.<br><br>
+          <button class="btn btn-ghost btn-sm" id="retry">Tentar novamente</button>
+          <button class="btn btn-ghost btn-sm" id="demo">Ver dados de demonstração</button></div>`;
+        $('retry').onclick = load; $('demo').onclick = useDemo;
+      }
+    }
+
+    function useDemo() {
+      results = LC.demoLawyers(origin.lat, origin.lon);
+      sessionStorage.setItem('lc_results', JSON.stringify(results));
+      render();
+    }
+
+    function render() {
+      Object.values(markers).forEach(m => m.remove()); markers = {};
+      const q = $('filtro').value.trim().toLowerCase();
+      const shown = results.filter(r => !q || (r.nome + ' ' + r.endereco).toLowerCase().includes(q));
+
+      if (!shown.length) {
+        $('list').innerHTML = `<div class="state">${results.length ? 'Nenhum resultado para esse filtro.' : 'Nenhum escritório encontrado nesse raio no mapa aberto.<br>Aumente o raio ou mude o endereço.'}<br><br>
+          ${results.length ? '' : '<button class="btn btn-ghost btn-sm" id="demo">Ver dados de demonstração</button>'}</div>`;
+        if ($('demo')) $('demo').onclick = useDemo;
+        return;
+      }
+
+      $('list').innerHTML = shown.map(r => `
+        <article class="lawyer" data-id="${LC.esc(r.id)}">
+          <div class="top">
+            <div class="avatar">${LC.esc(LC.initials(r.nome))}</div>
+            <div><h3>${LC.esc(r.nome)}${r.demo ? '<span class="demo-tag">DEMO</span>' : ''}</h3>
+              <div class="addr">${LC.esc(r.endereco || 'Endereço não informado')}</div></div>
+            <span class="dist-pill">${LC.fmtDist(r.dist)}</span>
+          </div>
+          <div class="acts">
+            <a class="btn btn-gold btn-sm" href="advogado.html?id=${encodeURIComponent(r.id)}">Ver perfil</a>
+            ${r.telefone ? `<a class="btn btn-ghost btn-sm" href="tel:${LC.esc(r.telefone)}">Ligar</a>` : ''}
+            <a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lon}">Rota</a>
+          </div>
+        </article>`).join('');
+
+      shown.forEach(r => {
+        const m = L.marker([r.lat, r.lon], { icon: pinIcon() }).addTo(map)
+          .bindPopup(`<b>${LC.esc(r.nome)}</b><br>${LC.fmtDist(r.dist)} de você<br><a href="advogado.html?id=${encodeURIComponent(r.id)}">Ver perfil →</a>`);
+        m.on('click', () => highlight(r.id, false));
+        markers[r.id] = m;
+      });
+
+      document.querySelectorAll('.lawyer').forEach(card => {
+        card.addEventListener('click', e => {
+          if (e.target.closest('a')) return;
+          highlight(card.dataset.id, true);
+        });
+      });
+    }
+
+    function highlight(id, pan) {
+      document.querySelectorAll('.lawyer').forEach(c => c.classList.toggle('sel', c.dataset.id === id));
+      const card = document.querySelector(`.lawyer[data-id="${CSS.escape(id)}"]`);
+      if (card) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      const m = markers[id];
+      if (m && pan) { map.setView(m.getLatLng(), Math.max(map.getZoom(), 15)); m.openPopup(); }
+    }
+
+    function useGPS() {
+      if (!navigator.geolocation) {
+        $('where').textContent = 'Seu navegador não suporta GPS. Digite um endereço.';
+        $('list').innerHTML = '<div class="state">Digite um endereço acima para buscar.</div>';
+        return;
+      }
+      $('where').textContent = 'Detectando sua localização…';
+      setLoading('Aguardando permissão de localização…');
+      navigator.geolocation.getCurrentPosition(
+        p => setOrigin(p.coords.latitude, p.coords.longitude),
+        () => {
+          $('where').textContent = 'Localização negada ou indisponível.';
+          $('list').innerHTML = '<div class="state">Permita o acesso à localização ou digite seu endereço, bairro ou CEP acima.</div>';
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+      );
+    }
+
+    async function searchAddress() {
+      const text = $('addr').value.trim();
+      if (!text) return;
+      setLoading('Procurando o endereço…');
+      try {
+        const g = await LC.geocode(text);
+        if (!g) { $('list').innerHTML = '<div class="state">Endereço não encontrado. Tente incluir a cidade.</div>'; return; }
+        await setOrigin(g.lat, g.lon, g.label.split(',').slice(0, 3).join(','));
+      } catch { $('list').innerHTML = '<div class="state">Erro ao buscar o endereço. Tente novamente.</div>'; }
+    }
+
+    $('btn-gps').onclick = useGPS;
+    $('btn-addr').onclick = searchAddress;
+    $('addr').addEventListener('keydown', e => { if (e.key === 'Enter') searchAddress(); });
+    $('radius').onchange = load;
+    $('filtro').oninput = render;
+
+    useGPS();
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perfil do advogado — Lex Connect</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="nav"></header>
+
+<main class="profile">
+  <div class="container">
+    <a class="back" href="advogados.html">← Voltar para a lista</a>
+    <div id="content"><div class="state"><div class="spinner"></div>Carregando…</div></div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="js/app.js"></script>
+<script>
+  if (LC.requireAuth()) init();
+
+  async function init() {
+    LC.renderNav('advogados');
+    const id = new URLSearchParams(location.search).get('id');
+    const box = document.getElementById('content');
+    if (!id) { box.innerHTML = '<div class="empty"><p>Advogado não informado.</p><a class="btn btn-gold" href="advogados.html">Ver advogados</a></div>'; return; }
+
+    let lawyer = null;
+    try { lawyer = (JSON.parse(sessionStorage.getItem('lc_results') || '[]')).find(r => r.id === id); } catch {}
+
+    // Se abriu o link direto (sem passar pela lista), busca o item na API
+    if (!lawyer && /^(node|way|relation)-\d+$/.test(id)) {
+      try {
+        const [type, num] = id.split('-');
+        const data = await LC.overpass(`[out:json][timeout:25];${type}(${num});out center tags;`);
+        if (data.elements[0]) lawyer = LC.normalize(data.elements[0], null);
+      } catch {}
+    }
+
+    if (!lawyer) { box.innerHTML = '<div class="empty"><p>Não encontramos este advogado. Volte à lista e busque novamente.</p><a class="btn btn-gold" href="advogados.html">Ver advogados</a></div>'; return; }
+    document.title = lawyer.nome + ' — Lex Connect';
+
+    const row = (k, v) => v ? `<div><b>${k}</b><span>${v}</span></div>` : '';
+    const site = lawyer.site ? `<a href="${LC.esc(lawyer.site.startsWith('http') ? lawyer.site : 'https://' + lawyer.site)}" target="_blank" rel="noopener">${LC.esc(lawyer.site)}</a>` : '';
+    const tel = lawyer.telefone ? `<a href="tel:${LC.esc(lawyer.telefone)}">${LC.esc(lawyer.telefone)}</a>` : '';
+    const mail = lawyer.email ? `<a href="mailto:${LC.esc(lawyer.email)}">${LC.esc(lawyer.email)}</a>` : '';
+
+    box.innerHTML = `
+      <div class="profile-grid">
+        <section class="card">
+          <div class="p-head">
+            <div class="avatar">${LC.esc(LC.initials(lawyer.nome))}</div>
+            <div><h1>${LC.esc(lawyer.nome)}</h1>
+              <p>${lawyer.dist != null ? LC.fmtDist(lawyer.dist) + ' de você' : 'Advocacia'}${lawyer.demo ? ' · dados de demonstração' : ''}</p></div>
+          </div>
+          <div class="info">
+            ${row('Endereço', LC.esc(lawyer.endereco || 'Não informado'))}
+            ${row('Telefone', tel || 'Não informado')}
+            ${row('E-mail', mail)}
+            ${row('Site', site)}
+            ${row('Horário', LC.esc(lawyer.horario))}
+          </div>
+          <div id="pmap"></div>
+          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+            <a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${lawyer.lat},${lawyer.lon}">Como chegar</a>
+            ${lawyer.telefone ? `<a class="btn btn-ghost btn-sm" href="tel:${LC.esc(lawyer.telefone)}">Ligar agora</a>` : ''}
+          </div>
+          <p class="note">Informações do OpenStreetMap, preenchidas por colaboradores e podem estar desatualizadas. Confirme antes de ir.</p>
+        </section>
+
+        <section class="card">
+          <h3 style="margin-bottom:6px">Solicitar contato</h3>
+          <p style="color:var(--mut);font-size:.9rem;margin-bottom:16px">Registre seu pedido aqui e acompanhe em “Minhas solicitações”.</p>
+          <div id="msg" class="msg"></div>
+          <form id="form" novalidate>
+            <div class="field"><label for="assunto">Área do assunto</label>
+              <select id="assunto">
+                <option>Direito civil</option><option>Direito de família</option><option>Direito trabalhista</option>
+                <option>Direito do consumidor</option><option>Direito criminal</option><option>Direito previdenciário</option>
+                <option>Direito imobiliário</option><option>Outro</option>
+              </select></div>
+            <div class="field"><label for="mensagem">Conte brevemente seu caso</label>
+              <textarea id="mensagem" placeholder="Explique em poucas linhas o que você precisa…"></textarea></div>
+            <button class="btn btn-gold btn-block" type="submit">Enviar solicitação</button>
+          </form>
+        </section>
+      </div>`;
+
+    const m = L.map('pmap', { scrollWheelZoom: false }).setView([lawyer.lat, lawyer.lon], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(m);
+    L.marker([lawyer.lat, lawyer.lon]).addTo(m);
+
+    document.getElementById('form').addEventListener('submit', e => {
+      e.preventDefault();
+      const msg = document.getElementById('msg');
+      const texto = document.getElementById('mensagem').value.trim();
+      if (texto.length < 10) return LC.showMsg(msg, 'Descreva seu caso com pelo menos 10 caracteres.');
+      const s = LC.session();
+      const list = LC.requests();
+      list.unshift({
+        id: 'r' + Date.now(), userId: s.id, status: 'Enviada', data: new Date().toISOString(),
+        assunto: document.getElementById('assunto').value, mensagem: texto,
+        advogado: { id: lawyer.id, nome: lawyer.nome, endereco: lawyer.endereco, telefone: lawyer.telefone, demo: !!lawyer.demo }
+      });
+      LC.saveRequests(list);
+      LC.toast('Solicitação enviada!');
+      setTimeout(() => location.href = 'solicitacoes.html', 900);
+    });
+  }
+</script>
+</body>
+</html>

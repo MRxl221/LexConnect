@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Criar conta — Lex Connect</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="nav"></header>
+
+<main class="auth">
+  <form class="auth-box" id="form" novalidate>
+    <h1>Crie sua conta</h1>
+    <p class="hint">Leva menos de um minuto.</p>
+    <div id="msg" class="msg"></div>
+
+    <div class="field"><label for="nome">Nome completo</label><input id="nome" autocomplete="name" placeholder="Maria Souza" required></div>
+    <div class="field"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" placeholder="voce@email.com" required></div>
+    <div class="field"><label for="tel">Telefone (opcional)</label><input id="tel" type="tel" autocomplete="tel" placeholder="(11) 90000-0000"></div>
+    <div class="row2">
+      <div class="field"><label for="senha">Senha</label><input id="senha" type="password" autocomplete="new-password" placeholder="Mín. 6 caracteres" required></div>
+      <div class="field"><label for="senha2">Confirmar senha</label><input id="senha2" type="password" autocomplete="new-password" placeholder="Repita a senha" required></div>
+    </div>
+    <label class="check"><input type="checkbox" id="termos"> <span>Concordo em compartilhar minha localização para buscar advogados próximos e com os termos de uso.</span></label>
+
+    <button class="btn btn-gold btn-block" type="submit">Criar conta</button>
+    <p class="alt-link">Já tem conta? <a href="login.html">Entrar</a></p>
+  </form>
+</main>
+
+<script src="js/app.js"></script>
+<script>
+  LC.renderNav('cadastro');
+  if (LC.session()) location.href = 'advogados.html';
+
+  document.getElementById('form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const msg = document.getElementById('msg');
+    const nome = document.getElementById('nome').value.trim();
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const tel = document.getElementById('tel').value.trim();
+    const senha = document.getElementById('senha').value;
+    const senha2 = document.getElementById('senha2').value;
+
+    if (nome.length < 3) return LC.showMsg(msg, 'Informe seu nome completo.');
+    if (!/^\S+@\S+\.\S+$/.test(email)) return LC.showMsg(msg, 'Informe um e-mail válido.');
+    if (senha.length < 6) return LC.showMsg(msg, 'A senha precisa ter pelo menos 6 caracteres.');
+    if (senha !== senha2) return LC.showMsg(msg, 'As senhas não conferem.');
+    if (!document.getElementById('termos').checked) return LC.showMsg(msg, 'Aceite os termos para continuar.');
+
+    const users = LC.users();
+    if (users.some(u => u.email === email)) return LC.showMsg(msg, 'Este e-mail já está cadastrado.');
+
+    users.push({ id: 'u' + Date.now(), nome, email, tel, senha: await LC.hash(senha), criado: new Date().toISOString() });
+    LC.saveUsers(users);
+    location.href = 'login.html?cadastro=ok';
+  });
+</script>
+</body>
+</html>

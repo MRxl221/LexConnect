@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lex Connect — Encontre advogados perto de você</title>
+<meta name="description" content="Cadastre-se e veja os advogados mais próximos de você, como no Uber.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="nav"></header>
+
+<main>
+  <section class="hero">
+    <div class="container">
+      <div>
+        <span class="badge">⚖ Advocacia na palma da mão</span>
+        <h1>O advogado certo, <em>pertinho</em> de você.</h1>
+        <p class="lead">Crie sua conta, permita a localização e veja em segundos os advogados mais próximos no mapa. Simples como pedir uma corrida.</p>
+        <div class="hero-cta">
+          <a href="cadastro.html" class="btn btn-gold">Criar conta grátis</a>
+          <a href="login.html" class="btn btn-ghost">Já tenho conta</a>
+        </div>
+      </div>
+      <div class="phone" aria-hidden="true">
+        <div class="map"></div>
+        <div class="mini"><div class="avatar">SA</div><div><b>Silva &amp; Almeida</b><small>Advocacia geral</small></div><span class="dist">350 m</span></div>
+        <div class="mini"><div class="avatar">CD</div><div><b>Dra. Camila Duarte</b><small>Direito civil</small></div><span class="dist">1,2 km</span></div>
+        <div class="mini"><div class="avatar">CM</div><div><b>Costa Mendes</b><small>Direito do trabalho</small></div><span class="dist">2,4 km</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt" id="como-funciona">
+    <div class="container">
+      <h2>Como funciona</h2>
+      <p class="sub">Três passos entre você e o atendimento jurídico.</p>
+      <div class="grid3">
+        <div class="card"><div class="ico">1</div><h3>Crie sua conta</h3><p>Cadastro rápido com nome, e-mail e senha. Seus dados ficam protegidos.</p></div>
+        <div class="card"><div class="ico">📍</div><h3>Compartilhe sua localização</h3><p>Usamos o GPS do seu dispositivo ou o endereço que você digitar para buscar escritórios na região.</p></div>
+        <div class="card"><div class="ico">💬</div><h3>Escolha e solicite contato</h3><p>Compare a distância, veja telefone e site e envie sua solicitação direto pelo perfil.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2>Por que Lex Connect?</h2>
+      <p class="sub">Menos tempo procurando, mais tempo resolvendo.</p>
+      <div class="grid3">
+        <div class="card"><div class="ico">🗺</div><h3>Mapa em tempo real</h3><p>Veja cada escritório no mapa e ordene por quem está mais perto.</p></div>
+        <div class="card"><div class="ico">🔎</div><h3>Filtros simples</h3><p>Ajuste o raio de busca e pesquise por nome ou endereço.</p></div>
+        <div class="card"><div class="ico">📋</div><h3>Histórico organizado</h3><p>Acompanhe todas as solicitações que você enviou em um só lugar.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="container">
+      <h2>Pronto para encontrar seu advogado?</h2>
+      <p>Leva menos de um minuto para começar.</p>
+      <a href="cadastro.html" class="btn btn-gold">Começar agora</a>
+    </div>
+  </section>
+</main>
+
+<footer><div class="container">© 2026 Lex Connect · Os dados dos escritórios vêm do OpenStreetMap e podem estar incompletos.</div></footer>
+
+<script src="js/app.js"></script>
+<script>
+  if (LC.session()) { /* usuário logado vai direto ao app */ }
+  LC.renderNav('home');
+</script>
+</body>
+</html>

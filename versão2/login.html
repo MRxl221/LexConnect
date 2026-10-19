@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entrar — Lex Connect</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="nav"></header>
+
+<main class="auth">
+  <form class="auth-box" id="form" novalidate>
+    <h1>Bem-vindo de volta</h1>
+    <p class="hint">Entre para ver os advogados perto de você.</p>
+    <div id="msg" class="msg"></div>
+
+    <div class="field"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" placeholder="voce@email.com" required></div>
+    <div class="field"><label for="senha">Senha</label><input id="senha" type="password" autocomplete="current-password" placeholder="Sua senha" required></div>
+
+    <button class="btn btn-gold btn-block" type="submit">Entrar</button>
+    <p class="alt-link">Não tem conta? <a href="cadastro.html">Criar conta</a></p>
+  </form>
+</main>
+
+<script src="js/app.js"></script>
+<script>
+  LC.renderNav('login');
+  const params = new URLSearchParams(location.search);
+  if (params.get('cadastro') === 'ok') LC.showMsg(document.getElementById('msg'), 'Conta criada! Faça login para continuar.', 'ok');
+
+  document.getElementById('form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const msg = document.getElementById('msg');
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const senha = document.getElementById('senha').value;
+    if (!email || !senha) return LC.showMsg(msg, 'Preencha e-mail e senha.');
+
+    const user = LC.users().find(u => u.email === email);
+    const h = await LC.hash(senha);
+    if (!user || user.senha !== h) return LC.showMsg(msg, 'E-mail ou senha incorretos.');
+
+    LC.setSession(user);
+    const next = params.get('next');
+    location.href = next && /^[\w.-]+\.html(\?.*)?$/.test(next) ? next : 'advogados.html';
+  });
+</script>
+</body>
+</html>
